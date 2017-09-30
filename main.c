@@ -83,11 +83,44 @@ static int lncurses_refresh(lua_State* L){
 }
 
 /*
-** Refresh stdscr
+** Get a character
 */
 static int lncurses_getch(lua_State* L){
-    // Just calls the refresh function
-    getch();
+    // Get a char and return it
+    int ch = (int) getch();
+    lua_pushinteger(L, ch);
+    return 1; // Will return one value
+}
+
+/*
+** Binding for raw()
+*/
+static int lncurses_raw(lua_State* L){
+    raw();
+    return 0;
+}
+
+/*
+** Binding for cbreak
+*/
+static int lncurses_cbreak(lua_State* L){
+    cbreak();
+    return 0;
+}
+
+/*
+** Binding for echo
+*/
+static int lncurses_echo(lua_State* L){
+    echo();
+    return 0;
+}
+
+/*
+** Binding for noecho
+*/
+static int lncurses_noecho(lua_State* L){
+    noecho();
     return 0;
 }
 
@@ -99,6 +132,10 @@ static const luaL_Reg lncurseslib[] = {
     {"addstr", lncurses_addstr},
     {"refresh", lncurses_refresh},
     {"getch", lncurses_getch},
+    {"raw", lncurses_raw},
+    {"cbreak", lncurses_cbreak},
+    {"echo", lncurses_echo},
+    {"noecho", lncurses_noecho},
     {NULL, NULL}
 };
 
