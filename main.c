@@ -124,6 +124,25 @@ static int lncurses_noecho(lua_State* L){
     return 0;
 }
 
+// Turn userData into a WINDOW object
+static WINDOW* toWindow(lua_State* L, int index){
+    WINDOW* window = (WINDOW*) lua_touserdata(L, index);
+    if(window == NULL){
+        // The window given was not a correct value
+    }
+    return window;
+}
+
+/*
+** Binding for keypad
+*/
+static int lncurses_keypad(lua_State* L){
+    printf("Is light user data: %d\n", (int) lua_islightuserdata(L, 1));
+    WINDOW* window = toWindow(L, 1);
+    keypad(window, lua_toboolean(L, 2));
+    return 0;
+}
+
 // Define the bindings
 static const luaL_Reg lncurseslib[] = {
     {"initscr", lncurses_initscr},
@@ -136,12 +155,18 @@ static const luaL_Reg lncurseslib[] = {
     {"cbreak", lncurses_cbreak},
     {"echo", lncurses_echo},
     {"noecho", lncurses_noecho},
+    {"keypad", lncurses_keypad},
     {NULL, NULL}
 };
 
 // Driver function
 LUALIB_API int luaopen_liblncurses(lua_State* L){
     luaL_newlib(L, lncurseslib);
+
+    // This will start off as NULL
+    lua_pushlightuserdata(L, stdscr);
+    lua_setfield(L, -2, "stdscr");
+
     lua_pushstring(L, VERSION);
     lua_setglobal(L, "_LNCURSES_VERSION");
     return 1;

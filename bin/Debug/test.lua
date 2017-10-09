@@ -2,14 +2,11 @@ lncurses = require("liblncurses");
 require("errorWrap");
 
 function run()
-	lncurses.initscr(); -- Init the screen
-	lncurses.addstr("Hello"); -- Say something
-	lncurses.addstr("world");
-	lncurses.refresh(); -- Display the message
+	lncurses.initscr()
+	--lncurses.keypad(lncurses.stdscr, true);
 	char = lncurses.getch();
-	lncurses.endwin();  -- Exit curses mode
+	lncurses.endwin();
 	print(char);
-	print("Version: ".._LNCURSES_VERSION); -- Print the version
 end
 
 errorWrap(run);
