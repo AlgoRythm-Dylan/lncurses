@@ -143,6 +143,23 @@ static int lncurses_keypad(lua_State* L){
     return 0;
 }
 
+/*
+** Binding for halfdelay
+*/
+static int lncurses_halfdelay(lua_State* L){
+    int ch = (int) halfdelay(luaL_checkint(L, -1));
+    lua_pushinteger(L, ch);
+    return 1;
+}
+
+/*
+** Moves to (y, x) - That isn't a typo. Old code, whatever.
+*/
+static int lncurses_move(lua_State* L){
+    move(luaL_checkint(L, 1), luaL_checkint(L, 2));
+    return 0;
+}
+
 // Define the bindings
 static const luaL_Reg lncurseslib[] = {
     {"initscr", lncurses_initscr},
@@ -156,6 +173,8 @@ static const luaL_Reg lncurseslib[] = {
     {"echo", lncurses_echo},
     {"noecho", lncurses_noecho},
     {"keypad", lncurses_keypad},
+    {"halfdelay", lncurses_halfdelay},
+    {"move", lncurses_move},
     {NULL, NULL}
 };
 

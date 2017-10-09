@@ -3,7 +3,8 @@ require("errorWrap");
 
 function run()
 	lncurses.initscr()
-	--lncurses.keypad(lncurses.stdscr, true);
+	lncurses.keypad(lncurses.stdscr, true);
+	lncurses.move(10, 3);
 	char = lncurses.getch();
 	lncurses.endwin();
 	print(char);
