@@ -3,6 +3,7 @@
 #include <lua5.2/lua.h>
 #include <lua5.2/lualib.h>
 #include <lua5.2/lauxlib.h>
+#include <stdlib.h>
 
 /*
 
@@ -29,6 +30,12 @@
 */
 static int lncurses_initscr(lua_State* L){
     initscr();
+
+    // Update stdscr on the Lua side, as it is NULL before stdscr is called
+    lua_getfield(L, LUA_REGISTRYINDEX, "lncurses");
+    lua_pushlightuserdata(L, stdscr);
+    lua_setfield(L, -2, "stdscr");
+
     return 0;
 }
 
@@ -137,7 +144,6 @@ static WINDOW* toWindow(lua_State* L, int index){
 ** Binding for keypad
 */
 static int lncurses_keypad(lua_State* L){
-    printf("Is light user data: %d\n", (int) lua_islightuserdata(L, 1));
     WINDOW* window = toWindow(L, 1);
     keypad(window, lua_toboolean(L, 2));
     return 0;
@@ -160,6 +166,20 @@ static int lncurses_move(lua_State* L){
     return 0;
 }
 
+/*
+** This function is more Lua than ncurses
+*/
+static int lncurses_getmaxyx(lua_State* L){
+    int y, x;
+    getmaxyx(toWindow(L, 1), x, y);
+
+    // Return the values
+    lua_pushinteger(L, y);
+    lua_pushinteger(L, x);
+
+    return 2;
+}
+
 // Define the bindings
 static const luaL_Reg lncurseslib[] = {
     {"initscr", lncurses_initscr},
@@ -175,6 +195,7 @@ static const luaL_Reg lncurseslib[] = {
     {"keypad", lncurses_keypad},
     {"halfdelay", lncurses_halfdelay},
     {"move", lncurses_move},
+    {"getmaxyx", lncurses_getmaxyx},
     {NULL, NULL}
 };
 
@@ -188,5 +209,10 @@ LUALIB_API int luaopen_liblncurses(lua_State* L){
 
     lua_pushstring(L, VERSION);
     lua_setglobal(L, "_LNCURSES_VERSION");
+
+    // This makes a way to reference the library again in the Lua registry
+    lua_pushvalue(L, -1);
+    lua_setfield(L, LUA_REGISTRYINDEX, "lncurses");
+
     return 1;
 }
