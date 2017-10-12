@@ -284,10 +284,26 @@ static int lncurses_attron(lua_State* L){
 }
 
 /*
-**
+** Binding for attroff
 */
 static int lncurses_attroff(lua_State* L){
     attroff(luaL_checkinteger(L, 1));
+    return 0;
+}
+
+/*
+** Binding for attrset
+*/
+static int lncurses_attrset(lua_State* L){
+    attrset(luaL_checkinteger(L, 1));
+    return 0;
+}
+
+/*
+** Binding for standend
+*/
+static int lncurses_standend(lua_State* L){
+    standend();
     return 0;
 }
 
@@ -310,6 +326,8 @@ static const luaL_Reg lncurseslib[] = {
     {"getstr", lncurses_getstr},
     {"attron", lncurses_attron},
     {"attroff", lncurses_attroff},
+    {"attrset", lncurses_attrset},
+    {"standend", lncurses_standend},
     {NULL, NULL}
 };
 
