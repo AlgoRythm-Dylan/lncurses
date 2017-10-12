@@ -4,8 +4,9 @@ require("errorWrap");
 function run()
 	lncurses.initscr()
 	lncurses.keypad(lncurses.stdscr, true);
-	lncurses.move(10, 3);
-	rows, colunmns = lncurses.getmaxyx(lncurses.stdscr);
+	lncurses.attron(lncurses.A_BOLD | lncurses.A_REVERSE);
+	lncurses.move(5, 5);
+	--rows, colunmns = lncurses.getmaxyx(lncurses.stdscr);
 	--lncurses.addstr(tostring(rows));
 	msg = "Message: "..lncurses.getstr();
 	lncurses.endwin();

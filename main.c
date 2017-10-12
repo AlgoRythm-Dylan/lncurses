@@ -275,6 +275,22 @@ static int lncurses_getstr(lua_State* L){
     return 1; // Will always return one string, but, of varying length
 }
 
+/*
+** Binding for attron
+*/
+static int lncurses_attron(lua_State* L){
+    attron(luaL_checkinteger(L, 1));
+    return 0;
+}
+
+/*
+**
+*/
+static int lncurses_attroff(lua_State* L){
+    attroff(luaL_checkinteger(L, 1));
+    return 0;
+}
+
 // Define the bindings
 static const luaL_Reg lncurseslib[] = {
     {"initscr", lncurses_initscr},
@@ -292,18 +308,55 @@ static const luaL_Reg lncurseslib[] = {
     {"move", lncurses_move},
     {"getmaxyx", lncurses_getmaxyx},
     {"getstr", lncurses_getstr},
+    {"attron", lncurses_attron},
+    {"attroff", lncurses_attroff},
     {NULL, NULL}
 };
+
+static void defineAttributes(lua_State* L){
+    lua_pushinteger(L, A_NORMAL);
+    lua_setfield(L, -2, "A_NORMAL");
+
+    lua_pushinteger(L, A_STANDOUT);
+    lua_setfield(L, -2, "A_STANDOUT");
+
+    lua_pushinteger(L, A_UNDERLINE);
+    lua_setfield(L, -2, "A_UNDERLINE");
+
+    lua_pushinteger(L, A_REVERSE);
+    lua_setfield(L, -2, "A_REVERSE");
+
+    lua_pushinteger(L, A_BLINK);
+    lua_setfield(L, -2, "A_BLINK");
+
+    lua_pushinteger(L, A_DIM);
+    lua_setfield(L, -2, "A_DIM");
+
+    lua_pushinteger(L, A_BOLD);
+    lua_setfield(L, -2, "A_BOLD");
+
+    lua_pushinteger(L, A_PROTECT);
+    lua_setfield(L, -2, "A_PROTECT");
+
+    lua_pushinteger(L, A_INVIS);
+    lua_setfield(L, -2, "A_INVIS");
+
+    lua_pushinteger(L, A_ALTCHARSET);
+    lua_setfield(L, -2, "A_ALTCHARSET");
+
+    lua_pushinteger(L, A_CHARTEXT);
+    lua_setfield(L, -2, "A_CHARTEXT");
+}
 
 // Driver function
 LUALIB_API int luaopen_liblncurses(lua_State* L){
     luaL_newlib(L, lncurseslib);
 
-    printf("%d", A_BOLD);
-
     // This will start off as NULL
     lua_pushlightuserdata(L, stdscr);
     lua_setfield(L, -2, "stdscr");
+
+    defineAttributes(L);
 
     lua_pushstring(L, VERSION);
     lua_setglobal(L, "_LNCURSES_VERSION");
