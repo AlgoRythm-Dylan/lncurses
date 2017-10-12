@@ -1,9 +1,9 @@
 #include <ncurses.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <lua5.2/lua.h>
 #include <lua5.2/lualib.h>
 #include <lua5.2/lauxlib.h>
-#include <stdlib.h>
 
 /*
 
@@ -24,6 +24,9 @@
 */
 
 #define VERSION "0.1.0"
+#define START_BUFFER_SIZE 100
+
+static int echoing = 1;
 
 /*
 ** Put the terminal in curses mode
@@ -120,6 +123,7 @@ static int lncurses_cbreak(lua_State* L){
 */
 static int lncurses_echo(lua_State* L){
     echo();
+    echoing = true;
     return 0;
 }
 
@@ -128,6 +132,7 @@ static int lncurses_echo(lua_State* L){
 */
 static int lncurses_noecho(lua_State* L){
     noecho();
+    echoing = false;
     return 0;
 }
 
@@ -167,7 +172,11 @@ static int lncurses_move(lua_State* L){
 }
 
 /*
-** This function is more Lua than ncurses
+** This function is more Lua than ncurses: It doesn't modify
+** the arguments passed into it, but does return two values
+** (y, x)
+**
+** Binding for getmaxyx
 */
 static int lncurses_getmaxyx(lua_State* L){
     int y, x;
@@ -178,6 +187,92 @@ static int lncurses_getmaxyx(lua_State* L){
     lua_pushinteger(L, x);
 
     return 2;
+}
+
+/*
+** From the ncurses man mage: "The function getstr is equivalent
+** to a series of calls to getch" - and that is what I will do.
+** I want it to be almost infinitely large as in Lua
+**
+** Binding for getstr
+*/
+static int lncurses_getstr(lua_State* L){
+
+    // Character buffer
+    char *buffer;
+    // The size of the butter, is dynamic
+    int bufferSize = START_BUFFER_SIZE;
+    // Current character being read. Integer to catch specia items like backspace
+    int ch;
+    // The length of the current string, among other uses...
+    int index = 0;
+
+    // Initial allocation of the char buffer
+    buffer = malloc(bufferSize);
+
+    noecho();
+
+    // While the character is not the enter key...
+    while((ch = getch()) != '\n'){
+
+        // If the user presses backspace...
+        if(ch == KEY_BACKSPACE){
+            // Get cursor info
+            int y, x, rows, columns;
+            getmaxyx(stdscr, rows, columns);
+            getyx(stdscr, y, x);
+            x--;
+
+            // Move back up a column
+            if(x == 0){
+                x = columns;
+                y--;
+            }
+            // Delete a character
+            mvdelch(y, x);
+
+            // Delete from the buffer
+            if(index != 0){
+                index--;
+            }
+            buffer[index] = '\0';
+        }
+        else{
+            // Echo out the character
+            addch(ch);
+            // Is it too big to fit in the buffer?
+            if(index >= bufferSize){
+
+                // A whole new buffer, double the size of the original
+                char *newBuffer;
+
+                // Double the size of the buffer.
+                // This will avoid reallocating memory frequently.
+                bufferSize *= 2;
+                newBuffer = realloc(buffer, bufferSize);
+                if(newBuffer == NULL){
+                    free(buffer);
+                    // Memory allocation failed
+                }
+                buffer = newBuffer;
+            }
+            // Add the character to the buffer
+            buffer[index] = ch;
+            // Increase the index counter
+            index++;
+        }
+    }
+
+    // Give the string to lua and destroy it
+    lua_pushstring(L, buffer);
+    free(buffer);
+
+    // Restore echoing if it was on previously
+    if(echoing){
+        echo();
+    }
+
+    return 1; // Will always return one string, but, of varying length
 }
 
 // Define the bindings
@@ -196,12 +291,15 @@ static const luaL_Reg lncurseslib[] = {
     {"halfdelay", lncurses_halfdelay},
     {"move", lncurses_move},
     {"getmaxyx", lncurses_getmaxyx},
+    {"getstr", lncurses_getstr},
     {NULL, NULL}
 };
 
 // Driver function
 LUALIB_API int luaopen_liblncurses(lua_State* L){
     luaL_newlib(L, lncurseslib);
+
+    printf("%d", A_BOLD);
 
     // This will start off as NULL
     lua_pushlightuserdata(L, stdscr);
@@ -213,6 +311,9 @@ LUALIB_API int luaopen_liblncurses(lua_State* L){
     // This makes a way to reference the library again in the Lua registry
     lua_pushvalue(L, -1);
     lua_setfield(L, LUA_REGISTRYINDEX, "lncurses");
+
+    // ensure defaults
+    echo();
 
     return 1;
 }

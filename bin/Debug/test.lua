@@ -6,10 +6,11 @@ function run()
 	lncurses.keypad(lncurses.stdscr, true);
 	lncurses.move(10, 3);
 	rows, colunmns = lncurses.getmaxyx(lncurses.stdscr);
-	lncurses.addstr(tostring(rows));
-	char = lncurses.getch();
+	--lncurses.addstr(tostring(rows));
+	msg = "Message: "..lncurses.getstr();
 	lncurses.endwin();
-	print(char);
+	print(msg);
+	--print(char);
 end
 
 --print("Fail: "..tostring(errorWrap(run)));
