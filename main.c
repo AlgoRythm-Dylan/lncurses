@@ -23,10 +23,59 @@
 
 */
 
+/**************************************************************
+
+                        CONSTANTS
+
+**************************************************************/
+
 #define VERSION "0.1.0"
 #define START_BUFFER_SIZE 100
 
+/**************************************************************
+
+                       DECLARATIONS
+
+**************************************************************/
+
+static int lncurses_initscr(lua_State*);
+static int lncurses_endwin(lua_State*);
+static int lncurses_printw(lua_State*);
+static int lncurses_addstr(lua_State*);
+static int lncurses_refresh(lua_State*);
+static int lncurses_getch(lua_State*);
+static int lncurses_raw(lua_State*);
+static int lncurses_cbreak(lua_State*);
+static int lncurses_echo(lua_State*);
+static int lncurses_noecho(lua_State*);
+static int lncurses_keypad(lua_State*);
+static int lncurses_halfdelay(lua_State*);
+static int lncurses_move(lua_State*);
+static int lncurses_getmaxyx(lua_State*);
+static int lncurses_getstr(lua_State*);
+static int lncurses_attron(lua_State*);
+static int lncurses_attroff(lua_State*);
+static int lncurses_attrset(lua_State*);
+static int lncurses_standend(lua_State*);
+static int lncurses_newwin(lua_State*);
+static int lncurses_box(lua_State*);
+static int lncurses_wrefresh(lua_State*);
+static WINDOW* toWindow(lua_State*, int);
+static char* lncurses_helper_getstr(WINDOW*);
+
+/**************************************************************
+
+                          DATA
+
+**************************************************************/
+
 static int echoing = 1;
+
+/**************************************************************
+
+                    IMPLEMENTATIONS
+
+**************************************************************/
 
 /*
 ** Put the terminal in curses mode
@@ -123,7 +172,7 @@ static int lncurses_cbreak(lua_State* L){
 */
 static int lncurses_echo(lua_State* L){
     echo();
-    echoing = true;
+    echoing = 1;
     return 0;
 }
 
@@ -132,7 +181,7 @@ static int lncurses_echo(lua_State* L){
 */
 static int lncurses_noecho(lua_State* L){
     noecho();
-    echoing = false;
+    echoing = 0;
     return 0;
 }
 
@@ -190,14 +239,34 @@ static int lncurses_getmaxyx(lua_State* L){
 }
 
 /*
-** From the ncurses man mage: "The function getstr is equivalent
-** to a series of calls to getch" - and that is what I will do.
-** I want it to be almost infinitely large as in Lua
-**
 ** Binding for getstr
 */
 static int lncurses_getstr(lua_State* L){
 
+    // Grab a char buffers
+    char* buffer = lncurses_helper_getstr(stdscr);
+
+    // Give the string to lua and then destroy it
+    lua_pushstring(L, buffer);
+    free(buffer);
+
+    // Restore echoing if it was on previously
+    if(echoing){
+        echo();
+    }
+
+    return 1; // Will always return one string, but, of varying length
+}
+
+/*
+**
+** From the ncurses man mage: "The function getstr is equivalent
+** to a series of calls to getch" - and that is what I will do.
+** I want it to be almost infinitely large as in Lua
+**
+** Helper function to getstr from a given window, of unlimited size
+*/
+static char* lncurses_helper_getstr(WINDOW* window){
     // Character buffer
     char *buffer;
     // The size of the butter, is dynamic
@@ -206,6 +275,9 @@ static int lncurses_getstr(lua_State* L){
     int ch;
     // The length of the current string, among other uses...
     int index = 0;
+    // Where the cursor was initially positioned at the call of the function
+    int starty, startx;
+    getyx(window, starty, startx);
 
     // Initial allocation of the char buffer
     buffer = malloc(bufferSize);
@@ -219,8 +291,9 @@ static int lncurses_getstr(lua_State* L){
         if(ch == KEY_BACKSPACE){
             // Get cursor info
             int y, x, rows, columns;
-            getmaxyx(stdscr, rows, columns);
-            getyx(stdscr, y, x);
+            getmaxyx(window, rows, columns);
+
+            getyx(window, y, x);
             x--;
 
             // Move back up a column
@@ -229,7 +302,7 @@ static int lncurses_getstr(lua_State* L){
                 y--;
             }
             // Delete a character
-            mvdelch(y, x);
+            mvwdelch(window, y, x);
 
             // Delete from the buffer
             if(index != 0){
@@ -239,7 +312,7 @@ static int lncurses_getstr(lua_State* L){
         }
         else{
             // Echo out the character
-            addch(ch);
+            waddch(window, ch);
             // Is it too big to fit in the buffer?
             if(index >= bufferSize){
 
@@ -262,17 +335,7 @@ static int lncurses_getstr(lua_State* L){
             index++;
         }
     }
-
-    // Give the string to lua and destroy it
-    lua_pushstring(L, buffer);
-    free(buffer);
-
-    // Restore echoing if it was on previously
-    if(echoing){
-        echo();
-    }
-
-    return 1; // Will always return one string, but, of varying length
+    return buffer;
 }
 
 /*
@@ -307,6 +370,32 @@ static int lncurses_standend(lua_State* L){
     return 0;
 }
 
+/*
+** Binding for newwin
+*/
+static int lncurses_newwin(lua_State* L){
+    WINDOW* window = newwin(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2),
+                            luaL_checkinteger(L, 3), luaL_checkinteger(L, 4));
+    lua_pushlightuserdata(L, window);
+    return 1;
+}
+
+/*
+** Binding for box
+*/
+static int lncurses_box(lua_State* L){
+    box(toWindow(L, 1), luaL_checkinteger(L, 2), luaL_checkinteger(L, 3));
+    return 0;
+}
+
+/*
+** Binding for wrefresh
+*/
+static int lncurses_wrefresh(lua_State* L){
+    wrefresh(toWindow(L, 1));
+    return 0;
+}
+
 // Define the bindings
 static const luaL_Reg lncurseslib[] = {
     {"initscr", lncurses_initscr},
@@ -328,6 +417,9 @@ static const luaL_Reg lncurseslib[] = {
     {"attroff", lncurses_attroff},
     {"attrset", lncurses_attrset},
     {"standend", lncurses_standend},
+    {"newwin", lncurses_newwin},
+    {"box", lncurses_box},
+    {"wrefresh", lncurses_wrefresh},
     {NULL, NULL}
 };
 
