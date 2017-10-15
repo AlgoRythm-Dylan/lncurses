@@ -60,6 +60,14 @@ static int lncurses_standend(lua_State*);
 static int lncurses_newwin(lua_State*);
 static int lncurses_box(lua_State*);
 static int lncurses_wrefresh(lua_State*);
+static int lncurses_has_colors(lua_State*);
+static int lncurses_start_color(lua_State*);
+static int lncurses_wgetch(lua_State*);
+// TODO
+static int lncurses_mvgetch(lua_State*);
+static int lncurses_mvwgetch(lua_State*);
+
+// HELPER FUNCTIONS
 static WINDOW* toWindow(lua_State*, int);
 static char* lncurses_helper_getstr(WINDOW*);
 
@@ -149,6 +157,15 @@ static int lncurses_getch(lua_State* L){
     int ch = (int) getch();
     lua_pushinteger(L, ch);
     return 1; // Will return one value
+}
+
+/*
+** getch for a specific window
+*/
+static int lncurses_wgetch(lua_State* L){
+    int ch = wgetch(toWindow(L, 1));
+    lua_pushinteger(L, ch);
+    return 1;
 }
 
 /*
@@ -396,6 +413,22 @@ static int lncurses_wrefresh(lua_State* L){
     return 0;
 }
 
+/*
+** Binding for has_color
+*/
+static int lncurses_has_colors(lua_State* L){
+    lua_pushboolean(L, has_colors());
+    return 1;
+}
+
+/*
+** Binding for start_color
+*/
+static int lncurses_start_color(lua_State* L){
+    start_color();
+    return 0;
+}
+
 // Define the bindings
 static const luaL_Reg lncurseslib[] = {
     {"initscr", lncurses_initscr},
@@ -420,6 +453,7 @@ static const luaL_Reg lncurseslib[] = {
     {"newwin", lncurses_newwin},
     {"box", lncurses_box},
     {"wrefresh", lncurses_wrefresh},
+    {"has_colors", lncurses_has_colors},
     {NULL, NULL}
 };
 
