@@ -30,7 +30,7 @@
 **************************************************************/
 
 #define VERSION "0.1.0"
-#define START_BUFFER_SIZE 100
+#define START_BUFFER_SIZE 128
 
 /**************************************************************
 
@@ -66,7 +66,10 @@ static int lncurses_wgetch(lua_State*);
 // TODO
 static int lncurses_mvgetch(lua_State*);
 static int lncurses_mvwgetch(lua_State*);
-
+static int lncurses_addch(lua_State*);
+static int lncurses_waddch(lua_State*);
+static int lncurses_mvaddch(lua_State*);
+static int lncurses_mvwaddch(lua_State*);
 // HELPER FUNCTIONS
 static WINDOW* toWindow(lua_State*, int);
 static char* lncurses_helper_getstr(WINDOW*);
@@ -164,6 +167,15 @@ static int lncurses_getch(lua_State* L){
 */
 static int lncurses_wgetch(lua_State* L){
     int ch = wgetch(toWindow(L, 1));
+    lua_pushinteger(L, ch);
+    return 1;
+}
+
+/*
+** Binding for mvgetch
+*/
+static int lncurses_mvgetch(lua_State* L){
+    int ch = mvgetch(luaL_checkinteger(L, 1), luaL_checkinteger(L, 1));
     lua_pushinteger(L, ch);
     return 1;
 }
