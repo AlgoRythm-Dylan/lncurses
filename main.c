@@ -58,13 +58,14 @@ static int lncurses_attroff(lua_State*);
 static int lncurses_attrset(lua_State*);
 static int lncurses_standend(lua_State*);
 static int lncurses_newwin(lua_State*);
+static int lncurses_delwin(lua_State*);
 static int lncurses_box(lua_State*);
 static int lncurses_wrefresh(lua_State*);
 static int lncurses_has_colors(lua_State*);
 static int lncurses_start_color(lua_State*);
 static int lncurses_wgetch(lua_State*);
-// TODO
 static int lncurses_mvgetch(lua_State*);
+// TODO
 static int lncurses_mvwgetch(lua_State*);
 static int lncurses_addch(lua_State*);
 static int lncurses_waddch(lua_State*);
@@ -175,7 +176,16 @@ static int lncurses_wgetch(lua_State* L){
 ** Binding for mvgetch
 */
 static int lncurses_mvgetch(lua_State* L){
-    int ch = mvgetch(luaL_checkinteger(L, 1), luaL_checkinteger(L, 1));
+    int ch = mvgetch(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
+    lua_pushinteger(L, ch);
+    return 1;
+}
+
+/*
+** Binding for wmvgetch
+*/
+static int lncurses_mvwgetch(lua_State* L){
+    int ch = mvwgetch(toWindow(L, 1), luaL_checkinteger(L, 2), luaL_checkinteger(L, 3));
     lua_pushinteger(L, ch);
     return 1;
 }
@@ -410,6 +420,14 @@ static int lncurses_newwin(lua_State* L){
 }
 
 /*
+** Binding for delwin
+*/
+static int lncurses_delwin(lua_State* L){
+    delwin(toWindow(L, 1));
+    return 1;
+}
+
+/*
 ** Binding for box
 */
 static int lncurses_box(lua_State* L){
@@ -449,6 +467,9 @@ static const luaL_Reg lncurseslib[] = {
     {"addstr", lncurses_addstr},
     {"refresh", lncurses_refresh},
     {"getch", lncurses_getch},
+    {"mvgetch", lncurses_mvgetch},
+    {"wgetch", lncurses_wgetch},
+    {"mvwgetch", lncurses_mvwgetch},
     {"raw", lncurses_raw},
     {"cbreak", lncurses_cbreak},
     {"echo", lncurses_echo},
@@ -463,6 +484,7 @@ static const luaL_Reg lncurseslib[] = {
     {"attrset", lncurses_attrset},
     {"standend", lncurses_standend},
     {"newwin", lncurses_newwin},
+    {"newwin", lncurses_delwin},
     {"box", lncurses_box},
     {"wrefresh", lncurses_wrefresh},
     {"has_colors", lncurses_has_colors},
