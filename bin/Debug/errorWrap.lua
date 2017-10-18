@@ -1,9 +1,10 @@
 lncurses = require("liblncurses");
 
 function errorWrap(func)
-	if not pcall(func) then
-		lncurses.endwin(); -- Clean up
-		return false;
+	success, msg = pcall(func);
+	if not success then
+		lncurses.endwin(); -- Cleanup
+		return success, msg;
 	end
-	return true;
+	return success;
 end

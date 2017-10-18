@@ -15,7 +15,10 @@ function run()
 	--print(char);
 end
 
-print("Fail: "..tostring(errorWrap(run)));
---run();
+success, msg = pcall(run);
+if not success then
+	print("== FAILURE ==");
+	print(msg);
+end
 
 print("If there aren't any errors at this point, maybe it worked");

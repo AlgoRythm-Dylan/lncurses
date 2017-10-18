@@ -20,6 +20,8 @@
         - If using g++, use -llua5.2 option. This fixes link errors.
         - Don't try, this won't work on Windows.
             - curses (& ncurses) is linux/ unix only
+        -Don't forget -lncurses linker option for ncurses (I have)
+        - You may also want -Wno-unused-but-set-variable
 
 */
 
@@ -65,12 +67,23 @@ static int lncurses_has_colors(lua_State*);
 static int lncurses_start_color(lua_State*);
 static int lncurses_wgetch(lua_State*);
 static int lncurses_mvgetch(lua_State*);
-// TODO
 static int lncurses_mvwgetch(lua_State*);
 static int lncurses_addch(lua_State*);
 static int lncurses_waddch(lua_State*);
 static int lncurses_mvaddch(lua_State*);
 static int lncurses_mvwaddch(lua_State*);
+// TODO
+static int lncurses_can_change_color(lua_State*);
+static int lncurses_init_pair(lua_State*);
+static int lncurses_init_color(lua_State*);
+static int lncurses_init_extended_pair(lua_State*);
+static int lncurses_init_extended_color(lua_State*);
+static int lncurses_color_content(lua_State*);
+static int lncurses_pair_content(lua_State*);
+static int lncurses_extended_color_content(lua_State*);
+static int lncurses_extended_pair_content(lua_State*);
+static int lncurses_reset_color_pairs(lua_State*);
+static int lncurses_COLOR_PAIR(lua_State*);
 // HELPER FUNCTIONS
 static WINDOW* toWindow(lua_State*, int);
 static char* lncurses_helper_getstr(WINDOW*);
@@ -381,7 +394,7 @@ static char* lncurses_helper_getstr(WINDOW* window){
 ** Binding for attron
 */
 static int lncurses_attron(lua_State* L){
-    attron(luaL_checkinteger(L, 1));
+    attron(luaL_checkint(L, 1));
     return 0;
 }
 
@@ -389,7 +402,7 @@ static int lncurses_attron(lua_State* L){
 ** Binding for attroff
 */
 static int lncurses_attroff(lua_State* L){
-    attroff(luaL_checkinteger(L, 1));
+    attroff(luaL_checkint(L, 1));
     return 0;
 }
 
@@ -397,7 +410,7 @@ static int lncurses_attroff(lua_State* L){
 ** Binding for attrset
 */
 static int lncurses_attrset(lua_State* L){
-    attrset(luaL_checkinteger(L, 1));
+    attrset(luaL_checkint(L, 1));
     return 0;
 }
 
@@ -413,8 +426,8 @@ static int lncurses_standend(lua_State* L){
 ** Binding for newwin
 */
 static int lncurses_newwin(lua_State* L){
-    WINDOW* window = newwin(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2),
-                            luaL_checkinteger(L, 3), luaL_checkinteger(L, 4));
+    WINDOW* window = newwin(luaL_checkint(L, 1), luaL_checkint(L, 2),
+                            luaL_checkint(L, 3), luaL_checkint(L, 4));
     lua_pushlightuserdata(L, window);
     return 1;
 }
@@ -431,7 +444,7 @@ static int lncurses_delwin(lua_State* L){
 ** Binding for box
 */
 static int lncurses_box(lua_State* L){
-    box(toWindow(L, 1), luaL_checkinteger(L, 2), luaL_checkinteger(L, 3));
+    box(toWindow(L, 1), luaL_checkint(L, 2), luaL_checkint(L, 3));
     return 0;
 }
 
@@ -459,6 +472,43 @@ static int lncurses_start_color(lua_State* L){
     return 0;
 }
 
+/*
+** Binding for addch
+*/
+static int lncurses_addch(lua_State* L){
+    const char* arg = luaL_checkstring(L, 1);
+    addch(arg[0]);
+    return 0;
+}
+
+/*
+** Binding for waddch
+*/
+static int lncurses_waddch(lua_State* L){
+    const char* arg = luaL_checkstring(L, 2);
+    waddch(toWindow(L, 1), arg[0]);
+    return 0;
+}
+
+/*
+** Binding for waddch
+*/
+static int lncurses_mvaddch(lua_State* L){
+    const char* arg = luaL_checkstring(L, 3);
+    mvaddch(luaL_checkint(L, 1), luaL_checkint(L, 2), arg[0]);
+    return 0;
+}
+
+/*
+** Binding for mvwaddch
+*/
+static int lncurses_mvwaddch(lua_State* L){
+    const char* arg = luaL_checkstring(L, 4);
+    mvwaddch(toWindow(L, 1), luaL_checkint(L, 2), luaL_checkint(L, 3), arg[0]);
+    return 0;
+}
+
+
 // Define the bindings
 static const luaL_Reg lncurseslib[] = {
     {"initscr", lncurses_initscr},
@@ -484,10 +534,15 @@ static const luaL_Reg lncurseslib[] = {
     {"attrset", lncurses_attrset},
     {"standend", lncurses_standend},
     {"newwin", lncurses_newwin},
-    {"newwin", lncurses_delwin},
+    {"delwin", lncurses_delwin},
     {"box", lncurses_box},
     {"wrefresh", lncurses_wrefresh},
     {"has_colors", lncurses_has_colors},
+    {"start_color", lncurses_start_color},
+    {"addch", lncurses_addch},
+    {"waddch", lncurses_waddch},
+    {"mvaddch", lncurses_mvaddch},
+    {"mvwaddch", lncurses_mvwaddch},
     {NULL, NULL}
 };
 
