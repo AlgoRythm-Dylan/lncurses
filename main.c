@@ -129,6 +129,7 @@ static int lncurses_endwin(lua_State* L){
 */
 static int lncurses_printw(lua_State* L){
     printw(luaL_checkstring(L, -1));
+    lua_pop(L, -1);
 
     // lua_gettop gets the size of the stack. If its 0,
     // the stack is empty, the loop exits
@@ -473,6 +474,22 @@ static int lncurses_start_color(lua_State* L){
 }
 
 /*
+** Binding for init_pair
+*/
+static int lncurses_init_pair(lua_State* L){
+    init_pair((short) luaL_checkint(L, 1), (short) luaL_checkint(L, 2), (short) luaL_checkint(L, 3));
+    return 0;
+}
+
+/*
+** Binding for COLOR_PAIR
+*/
+static int lncurses_COLOR_PAIR(lua_State* L){
+    lua_pushinteger(L, COLOR_PAIR(luaL_checkint(L, 1)));
+    return 1;
+}
+
+/*
 ** Binding for addch
 */
 static int lncurses_addch(lua_State* L){
@@ -513,32 +530,43 @@ static int lncurses_mvwaddch(lua_State* L){
 static const luaL_Reg lncurseslib[] = {
     {"initscr", lncurses_initscr},
     {"endwin", lncurses_endwin},
+    // Output
     {"printw", lncurses_printw},
     {"addstr", lncurses_addstr},
     {"refresh", lncurses_refresh},
-    {"getch", lncurses_getch},
-    {"mvgetch", lncurses_mvgetch},
-    {"wgetch", lncurses_wgetch},
-    {"mvwgetch", lncurses_mvwgetch},
     {"raw", lncurses_raw},
     {"cbreak", lncurses_cbreak},
+    // Echoing
     {"echo", lncurses_echo},
     {"noecho", lncurses_noecho},
     {"keypad", lncurses_keypad},
     {"halfdelay", lncurses_halfdelay},
+    // Moving
     {"move", lncurses_move},
+    // Size
     {"getmaxyx", lncurses_getmaxyx},
+    // Input
     {"getstr", lncurses_getstr},
+    {"getch", lncurses_getch},
+    {"wgetch", lncurses_wgetch},
+    {"mvgetch", lncurses_mvgetch},
+    {"mvwgetch", lncurses_mvwgetch},
+    // Attributes
     {"attron", lncurses_attron},
     {"attroff", lncurses_attroff},
     {"attrset", lncurses_attrset},
     {"standend", lncurses_standend},
+    // Windows
     {"newwin", lncurses_newwin},
     {"delwin", lncurses_delwin},
     {"box", lncurses_box},
     {"wrefresh", lncurses_wrefresh},
+    // Color
     {"has_colors", lncurses_has_colors},
     {"start_color", lncurses_start_color},
+    {"init_pair", lncurses_init_pair},
+    {"COLOR_PAIR", lncurses_COLOR_PAIR},
+    // Addch
     {"addch", lncurses_addch},
     {"waddch", lncurses_waddch},
     {"mvaddch", lncurses_mvaddch},
@@ -581,6 +609,24 @@ static void defineAttributes(lua_State* L){
     lua_setfield(L, -2, "A_CHARTEXT");
 }
 
+static void defineColors(lua_State* L){
+    lua_pushinteger(L, COLOR_BLACK);
+    lua_setfield(L, -2, "COLOR_BLACK");
+
+    lua_pushinteger(L, COLOR_WHITE);
+    lua_setfield(L, -2, "COLOR_WHITE");
+
+    lua_pushinteger(L, COLOR_BLUE);
+    lua_setfield(L, -2, "COLOR_BLUE");
+
+    lua_pushinteger(L, COLOR_CYAN);
+    lua_setfield(L, -2, "COLOR_CYAN");
+
+    lua_pushinteger(L, COLOR_GREEN);
+    lua_setfield(L, -2, "COLOR_GREEN");
+
+}
+
 // Driver function
 LUALIB_API int luaopen_liblncurses(lua_State* L){
     luaL_newlib(L, lncurseslib);
@@ -590,6 +636,7 @@ LUALIB_API int luaopen_liblncurses(lua_State* L){
     lua_setfield(L, -2, "stdscr");
 
     defineAttributes(L);
+    defineColors(L);
 
     lua_pushstring(L, VERSION);
     lua_setglobal(L, "_LNCURSES_VERSION");

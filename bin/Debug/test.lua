@@ -5,14 +5,14 @@ bit = require("bit");
 function run()
 	lncurses.initscr()
 	lncurses.keypad(lncurses.stdscr, true);
-	lncurses.attron(bit.bor(lncurses.A_BOLD, lncurses.A_REVERSE));
-	lncurses.move(5, 5);
-	--rows, colunmns = lncurses.getmaxyx(lncurses.stdscr);
-	--lncurses.addstr(tostring(rows));
-	msg = "Message: "..lncurses.getstr();
+	lncurses.start_color();
+	lncurses.init_pair(1, lncurses.COLOR_BLACK, lncurses.COLOR_GREEN);
+	lncurses.attron(lncurses.COLOR_PAIR(1));
+	lncurses.addstr("COOL STUFF");
+	lncurses.attroff(lncurses.COLOR_PAIR(1));
+	key = lncurses.getch();
 	lncurses.endwin();
-	print(msg);
-	--print(char);
+	print(key);
 end
 
 success, msg = pcall(run);
