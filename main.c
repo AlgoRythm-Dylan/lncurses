@@ -20,7 +20,11 @@
         - If using g++, use -llua5.2 option. This fixes link errors.
         - Don't try, this won't work on Windows.
             - curses (& ncurses) is linux/ unix only
-        -Don't forget -lncurses linker option for ncurses (I have)
+                - I dont want to try to hack this into a windows machine...
+        - Don't forget -lncurses linker option for ncurses
+        - Don't forget --enable-ext-colors linker option if you want 256 colors
+            - Should be enabled by default but just to be sure
+        - Also you will want the linker option --enable-widec
         - You may also want -Wno-unused-but-set-variable
 
 */
@@ -72,18 +76,21 @@ static int lncurses_addch(lua_State*);
 static int lncurses_waddch(lua_State*);
 static int lncurses_mvaddch(lua_State*);
 static int lncurses_mvwaddch(lua_State*);
-// TODO
+static int lncurses_color_content(lua_State*);
+static int lncurses_pair_content(lua_State*);
+static int lncurses_COLOR_PAIR(lua_State*);
 static int lncurses_can_change_color(lua_State*);
 static int lncurses_init_pair(lua_State*);
 static int lncurses_init_color(lua_State*);
-static int lncurses_init_extended_pair(lua_State*);
-static int lncurses_init_extended_color(lua_State*);
-static int lncurses_color_content(lua_State*);
-static int lncurses_pair_content(lua_State*);
-static int lncurses_extended_color_content(lua_State*);
-static int lncurses_extended_pair_content(lua_State*);
+// TODO
 static int lncurses_reset_color_pairs(lua_State*);
-static int lncurses_COLOR_PAIR(lua_State*);
+// Eh... later
+    /*
+    static int lncurses_init_extended_pair(lua_State*);
+    static int lncurses_init_extended_color(lua_State*);
+    static int lncurses_extended_color_content(lua_State*);
+    static int lncurses_extended_pair_content(lua_State*);
+    */
 // HELPER FUNCTIONS
 static WINDOW* toWindow(lua_State*, int);
 static char* lncurses_helper_getstr(WINDOW*);
@@ -95,6 +102,7 @@ static char* lncurses_helper_getstr(WINDOW*);
 **************************************************************/
 
 static int echoing = 1;
+static int swapxy = 0;
 
 /**************************************************************
 
@@ -490,6 +498,57 @@ static int lncurses_COLOR_PAIR(lua_State* L){
 }
 
 /*
+** Binding for color_content
+*/
+static int lncurses_color_content(lua_State* L){
+    short r, g, b;
+    color_content((short) luaL_checkint(L, 1), &r, &g, &b);
+    lua_pushinteger(L, r);
+    lua_pushinteger(L, g);
+    lua_pushinteger(L, b);
+    return 3;
+}
+
+/*
+** Binding for pair_content
+*/
+static int lncurses_pair_content(lua_State* L){
+    short color1, color2;
+    pair_content((short) luaL_checkint(L, 1), &color1, &color2);
+    lua_pushinteger(L, color1);
+    lua_pushinteger(L, color2);
+    return 2;
+}
+
+/*
+** Binding for can_change_color
+*/
+static int lncurses_can_change_color(lua_State* L){
+    lua_pushboolean(L, can_change_color());
+    return 1;
+}
+
+/*
+** Binding for init_color
+*/
+static int lncurses_init_color(lua_State* L){
+    int color = init_color((short) luaL_checkint(L, 1),
+                           (short) luaL_checkint(L, 2),
+                           (short) luaL_checkint(L, 3),
+                           (short) luaL_checkint(L, 4));
+    lua_pushinteger(L, color);
+    return 1;
+}
+
+/*
+** Binding for reset_color_pairs
+*/
+static int lncurses_reset_color_pairs(lua_State* L){
+    reset_color_pairs();
+    return 0;
+}
+
+/*
 ** Binding for addch
 */
 static int lncurses_addch(lua_State* L){
@@ -566,6 +625,11 @@ static const luaL_Reg lncurseslib[] = {
     {"start_color", lncurses_start_color},
     {"init_pair", lncurses_init_pair},
     {"COLOR_PAIR", lncurses_COLOR_PAIR},
+    {"color_content", lncurses_color_content},
+    {"pair_content", lncurses_pair_content},
+    {"init_color", lncurses_init_color},
+    {"can_change_color", lncurses_can_change_color},
+    {"reset_color_pairs", lncurses_reset_color_pairs},
     // Addch
     {"addch", lncurses_addch},
     {"waddch", lncurses_waddch},
