@@ -83,7 +83,7 @@ static int lncurses_can_change_color(lua_State*);
 static int lncurses_init_pair(lua_State*);
 static int lncurses_init_color(lua_State*);
 // TODO
-static int lncurses_reset_color_pairs(lua_State*);
+
 // Eh... later
     /*
     static int lncurses_init_extended_pair(lua_State*);
@@ -541,14 +541,6 @@ static int lncurses_init_color(lua_State* L){
 }
 
 /*
-** Binding for reset_color_pairs
-*/
-static int lncurses_reset_color_pairs(lua_State* L){
-    reset_color_pairs();
-    return 0;
-}
-
-/*
 ** Binding for addch
 */
 static int lncurses_addch(lua_State* L){
@@ -629,7 +621,6 @@ static const luaL_Reg lncurseslib[] = {
     {"pair_content", lncurses_pair_content},
     {"init_color", lncurses_init_color},
     {"can_change_color", lncurses_can_change_color},
-    {"reset_color_pairs", lncurses_reset_color_pairs},
     // Addch
     {"addch", lncurses_addch},
     {"waddch", lncurses_waddch},
